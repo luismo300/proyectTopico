@@ -1,0 +1,6 @@
+resource_group_name = "rg-aci-demo"
+location            = "centralus"
+vnet_name           = "vnet-aci"
+subnet_name         = "subnet-aci"
+container_name      = "aci-demo"
+acr_name            = "acrdemo123456"
