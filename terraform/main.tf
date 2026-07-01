@@ -56,12 +56,12 @@ resource "azurerm_container_group" "aci" {
 
   image_registry_credential {
   server   = azurerm_container_registry.acr.login_server
-  identity = "System"
+  identity = "SystemAssigned"
   }
 
   container {
     name   = "nginx"
-    image = "${azurerm_container_registry.acr.login_server}/nginx:latest"
+    image = "${azurerm_container_registry.acr.login_server}/proyecttopico:latest"
     cpu    = "1"
     memory = "1"
 
