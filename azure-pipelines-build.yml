@@ -1,0 +1,44 @@
+- stage: DockerLifecycle
+  displayName: 'Etapa de Docker (Build & Push)'
+  dependsOn: BuildAndTest
+  condition: succeeded()
+  jobs:
+  - job: DockerPush
+    displayName: 'Construir y Publicar en ACR'
+    steps:
+    # 1. Autenticarse en el ACR
+    - task: AzureCLI@2
+      displayName: 'Autenticar Docker en el ACR'
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(acrLoginServer)
+
+    # 2. Docker Build Corregido
+    - task: Docker@2
+      displayName: 'Construir Imagen Docker (Docker Build)'
+      inputs:
+        containerRegistryType: 'Azure Container Registry'     # <- Obligatorio
+        azureSubscriptionEndpoint: '$(azureServiceConnection)' # <- Tu Service Connection (azurerm)
+        azureContainerRegistry: '$(acrLoginServer)'           # <- Tu servidor (luismo123456.azurecr.io)
+        repository: '$(imageRepository)'
+        command: 'build'
+        Dockerfile: '$(dockerfilePath)'
+        tags: |
+          latest
+          $(Build.BuildId)
+
+    # 3. Docker Push Corregido
+    - task: Docker@2
+      displayName: 'Publicar Imagen en ACR (Docker Push)'
+      inputs:
+        containerRegistryType: 'Azure Container Registry'     # <- Obligatorio
+        azureSubscriptionEndpoint: '$(azureServiceConnection)' # <- Tu Service Connection (azurerm)
+        azureContainerRegistry: '$(acrLoginServer)'           # <- Tu servidor (luismo123456.azurecr.io)
+        repository: '$(imageRepository)'
+        command: 'push'
+        tags: |
+          latest
+          $(Build.BuildId)
