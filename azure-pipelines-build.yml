@@ -9,7 +9,7 @@ variables:
   azureServiceConnection: 'AzureServiceConnection' 
   acrLoginServer: 'luismo123456.azurecr.io'
   imageRepository: 'proyecttopico'
-  dockerfilePath: '$(Build.SourcesDirectory)/mouseRazer/Dockerfile' # Asegúrate de que el Dockerfile esté en la raíz
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile' # Asegúrate de que el Dockerfile esté en la raíz
 
 stages:
 - stage: BuildAndTest
