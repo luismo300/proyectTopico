@@ -6,26 +6,30 @@ pool:
 
 variables:
   acrName: acrdemo123456
-  imageName: proyectTopico
+  imageName: proyecttopico
   tag: latest
 
 steps:
 
+# 1. Descargar código
 - checkout: self
 
-- task: DockerInstaller@0
+# 2. Construir imagen Docker
+- script: |
+    docker build -t $(imageName):$(tag) .
+  displayName: Build Docker image
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'AzureServiceConnection'
-    scriptType: bash
-    scriptLocation: inlineScript
-    inlineScript: |
+# 3. Login a ACR (esto fallará hasta que tengas conexión Azure)
+- script: |
+    echo "az acr login --name $(acrName)"
+  displayName: Login to ACR (placeholder)
 
-      az acr login --name $(acrName)
+# 4. Tag de la imagen
+- script: |
+    docker tag $(imageName):$(tag) $(acrName).azurecr.io/$(imageName):$(tag)
+  displayName: Tag image
 
-      docker build -t $(imageName):$(tag) .
-
-      docker tag $(imageName):$(tag) $(acrName).azurecr.io/$(imageName):$(tag)
-
-      docker push $(acrName).azurecr.io/$(imageName):$(tag)
+# 5. Push a ACR (también requiere login real)
+- script: |
+    echo "docker push $(acrName).azurecr.io/$(imageName):$(tag)"
+  displayName: Push image (placeholder)
