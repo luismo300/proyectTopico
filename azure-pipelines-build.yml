@@ -1,0 +1,31 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  acrName: acrdemo123456
+  imageName: proyectTopico
+  tag: latest
+
+steps:
+
+- checkout: self
+
+- task: DockerInstaller@0
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'AzureServiceConnection'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+
+      az acr login --name $(acrName)
+
+      docker build -t $(imageName):$(tag) .
+
+      docker tag $(imageName):$(tag) $(acrName).azurecr.io/$(imageName):$(tag)
+
+      docker push $(acrName).azurecr.io/$(imageName):$(tag)

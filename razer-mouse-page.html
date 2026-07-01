@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razer Gaming Mice - For Gamers. By Gamers.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.3);
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00ff00;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #00ff00;
+        }
+
+        .hero {
+            margin-top: 80px;
+            height: 90vh;
+            background: linear-gradient(135deg, #000 0%, #0a3d0a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(0, 255, 0, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 1;
+            max-width: 900px;
+            padding: 40px;
+        }
+
+        .hero h1 {
+            font-size: 72px;
+            margin-bottom: 20px;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+            to { text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00; }
+        }
+
+        .hero p {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #ccc;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            color: #000;
+            padding: 18px 50px;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            display: inline-block;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4);
+            text-transform: uppercase;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 0, 0.6);
+        }
+
+        .products {
+            max-width: 1400px;
+            margin: 80px auto;
+            padding: 0 40px;
+        }
+
+        .section-title {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 60px;
+            color: #00ff00;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            border-color: #00ff00;
+            box-shadow: 0 10px 40px rgba(0, 255, 0, 0.4);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 280px;
+            background: linear-gradient(135deg, #0a3d0a, #000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #00ff00;
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .product-info {
+            padding: 30px;
+        }
+
+        .product-info h3 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            color: #00ff00;
+        }
+
+        .product-info p {
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .specs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .spec-item::before {
+            content: '▸';
+            color: #00ff00;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .price {
+            font-size: 28px;
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .buy-button {
+            background: #00ff00;
+            color: #000;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 30px;
+            display: inline-block;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .buy-button:hover {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+
+        .features {
+            background: linear-gradient(135deg, #0a3d0a, #000);
+            padding: 100px 40px;
+            margin-top: 80px;
+        }
+
+        .features-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: #00ff00;
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .feature-card p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        footer {
+            background: #000;
+            text-align: center;
+            padding: 40px;
+            border-top: 2px solid #00ff00;
+            margin-top: 80px;
+        }
+
+        footer p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 42px;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">⚡ RAZER</div>
+            <ul class="nav-links">
+                <li><a href="#products">Productos</a></li>
+                <li><a href="#features">Características</a></li>
+                <li><a href="#about">Acerca</a></li>
+                <li><a href="#contact">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>RAZER GAMING MICE</h1>
+            <p>Precisión Absoluta. Rendimiento Profesional. Para Gamers, Por Gamers.</p>
+            <a href="#products" class="cta-button">Descubre Más</a>
+        </div>
+    </section>
+
+    <section class="products" id="products">
+        <h2 class="section-title">Nuestra Línea 2025</h2>
+        <div class="product-grid">
+            
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="mouse1.jfif" alt="Razer DeathAdder V4 Pro" id="img1">
+                    <span class="product-badge">Nuevo 2025</span>
+                </div>
+                <div class="product-info">
+                    <h3>Razer DeathAdder V4 Pro</h3>
+                    <p>El mouse ergonómico flagship con el sensor más avanzado y características esports de vanguardia.</p>
+                    <div class="specs">
+                        <div class="spec-item">Sensor Focus Pro Gen-2 35K DPI</div>
+                        <div class="spec-item">8000 Hz de frecuencia de polling</div>
+                        <div class="spec-item">Peso ultra-ligero: 63g</div>
+                        <div class="spec-item">Switches ópticos Razer Gen-3</div>
+                    </div>
+                    <div class="price">$169.99</div>
+                    <a href="#" class="buy-button">Comprar Ahora</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="mouse2.jfif" alt="Razer Viper V3 Pro" id="img2">
+                    <span class="product-badge">Bestseller</span>
+                </div>
+                <div class="product-info">
+                    <h3>Razer Viper V3 Pro</h3>
+                    <p>Diseño ambidextro ultra-ligero favorecido por profesionales de esports en todo el mundo.</p>
+                    <div class="specs">
+                        <div class="spec-item">Sensor Focus Pro 30K DPI</div>
+                        <div class="spec-item">Tecnología HyperSpeed Wireless</div>
+                        <div class="spec-item">Solo 58g de peso</div>
+                        <div class="spec-item">Hasta 90 horas de batería</div>
+                    </div>
+                    <div class="price">$149.99</div>
+                    <a href="#" class="buy-button">Comprar Ahora</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="mouse3.jfif" alt="Razer Naga V2 Pro" id="img3">
+                    <span class="product-badge">MMO Pro</span>
+                </div>
+                <div class="product-info">
+                    <h3>Razer Naga V2 Pro</h3>
+                    <p>El mouse definitivo para MMO con 12 botones programables en el pulgar y máxima versatilidad.</p>
+                    <div class="specs">
+                        <div class="spec-item">12 botones mecánicos en el pulgar</div>
+                        <div class="spec-item">Sensor Focus Pro 30K DPI</div>
+                        <div class="spec-item">Diseño ergonómico premium</div>
+                        <div class="spec-item">3 paneles laterales intercambiables</div>
+                    </div>
+                    <div class="price">$179.99</div>
+                    <a href="#" class="buy-button">Comprar Ahora</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="mose4.jpg" alt="Razer DeathAdder Essential" id="img4">
+                    <span class="product-badge">Budget</span>
+                </div>
+                <div class="product-info">
+                    <h3>Razer DeathAdder Essential</h3>
+                    <p>Rendimiento profesional a precio accesible. La opción perfecta para comenzar en el gaming competitivo.</p>
+                    <div class="specs">
+                        <div class="spec-item">Sensor óptico 6400 DPI</div>
+                        <div class="spec-item">5 botones programables</div>
+                        <div class="spec-item">Diseño ergonómico clásico</div>
+                        <div class="spec-item">Iluminación Razer Chroma RGB</div>
+                    </div>
+                    <div class="price">$34.99</div>
+                    <a href="#" class="buy-button">Comprar Ahora</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="mouse5.webp" alt="Razer Orochi V2" id="img5">
+                    <span class="product-badge">Portátil</span>
+                </div>
+                <div class="product-info">
+                    <h3>Razer Orochi V2</h3>
+                    <p>Mouse inalámbrico ultracompacto perfecto para gaming móvil con 950 horas de batería.</p>
+                    <div class="specs">
+                        <div class="spec-item">Sensor óptico 18K DPI</div>
+                        <div class="spec-item">Modo HyperSpeed o Bluetooth</div>
+                        <div class="spec-item">Peso ultra-ligero: 60g</div>
+                        <div class="spec-item">Batería AA o AAA</div>
+                    </div>
+                    <div class="price">$39.99</div>
+                    <a href="#" class="buy-button">Comprar Ahora</a>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="mouse6.jpg" alt="Razer Basilisk V3" id="img6">
+                    <span class="product-badge">Todo Terreno</span>
+                </div>
+                <div class="product-info">
+                    <h3>Razer Basilisk V3</h3>
+                    <p>Mouse versátil con rueda de desplazamiento inteligente y 11 botones programables.</p>
+                    <div class="specs">
+                        <div class="spec-item">Sensor Focus+ 26K DPI</div>
+                        <div class="spec-item">11 botones programables</div>
+                        <div class="spec-item">Rueda HyperScroll Tilt</div>
+                        <div class="spec-item">Chroma RGB con 11 zonas</div>
+                    </div>
+                    <div class="price">$69.99</div>
+                    <a href="#" class="buy-button">Comprar Ahora</a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <h2 class="section-title">Tecnología Razer</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Focus Pro Sensor</h3>
+                <p>El sensor óptico más avanzado del mundo con hasta 35,000 DPI de resolución máxima para precisión absoluta.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔘</div>
+                <h3>Optical Switches Gen-3</h3>
+                <p>Switches ópticos con respuesta de 0.2ms y durabilidad de 90 millones de clics para ventaja competitiva.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📡</div>
+                <h3>HyperSpeed Wireless</h3>
+                <p>Tecnología inalámbrica 25% más rápida que la competencia con latencia imperceptible de menos de 1ms.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>Razer Chroma RGB</h3>
+                <p>Iluminación personalizable con 16.8 millones de colores sincronizada con tu setup completo.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h3>Razer Synapse 4</h3>
+                <p>Software de configuración 30% más rápido con personalización total de botones, macros y perfiles.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Esports Validated</h3>
+                <p>Usado por profesionales de Team Razer en los torneos más prestigiosos del mundo.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Razer Inc. Todos los derechos reservados. Para Gamers, Por Gamers.</p>
+        <p>Este es un proyecto educativo. Razer es una marca registrada de Razer Inc.</p>
+    </footer>
+</body>
+</html>
