@@ -1,0 +1,9 @@
+# Ignorar dependencias e historial de Git
+.git
+.gitignore
+
+# Ignorar archivos del Pipeline e Infraestructura
+azure-pipelines*
+.azure-pipelines/
+terraform/
+.terraform/
