@@ -12,8 +12,8 @@ variables:
   # Variables de Destino
   resourceGroup: 'rg-aci-demo'              
   aciContainerName: 'aci-proyecttopico'
-  dnsNameLabel: 'luis-mouse-app-topico2026' # Si da error de DNS, cámbiale un número al final
-  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  dnsNameLabel: 'luis-mouse-app-topico-v3' # Cambiado para evitar choques de nombres
+  locationRegion: 'eastus'                 # REGION FORZADA A EASTUS
 
 stages:
 - stage: DeployToACI
@@ -26,7 +26,7 @@ stages:
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-# PASO 2 CORREGIDO: Sintaxis de memoria correcta y credenciales limpias
+    # PASO 2 CORREGIDO: Creación forzada en East US para cuentas de estudiante
     - task: AzureCLI@2
       displayName: 'Crear o Actualizar Contenedor en ACI'
       inputs:
@@ -38,21 +38,16 @@ stages:
           az acr update --name luismo123456 --admin-enabled true --resource-group $(resourceGroup)
           
           echo "=== 2. OBTENIENDO PASSWORD DEL ADMINISTRADOR ==="
-          # Comando limpio nativo para extraer el password de administrador sin conflictos
           ACR_PASSWORD=$(az acr credential show --name luismo123456 --query "passwords[0].value" -o tsv)
           ACR_USERNAME="luismo123456"
           
-          echo "=== 3. DETECTANDO UBICACIÓN DEL GRUPO DE RECURSOS ==="
-          DETECTED_LOCATION=$(az group show --name $(resourceGroup) --query location -o tsv)
-          echo "La región detectada es: $DETECTED_LOCATION"
-          
-          echo "=== 4. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI ==="
-          # CAMBIO CLAVE: --memory ahora es 1.5 en número puro sin 'Gi'
+          echo "=== 3. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI (EAST US) ==="
+          # CAMBIO CLAVE: Usamos $(locationRegion) en lugar de $DETECTED_LOCATION
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
             --image $(acrLoginServer)/$(imageRepository):latest \
-            --location $DETECTED_LOCATION \
+            --location $(locationRegion) \
             --cpu 1 \
             --memory 1.5 \
             --registry-login-server $(acrLoginServer) \
@@ -73,12 +68,12 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "=== 5. VERIFICANDO EXISTENCIA Y ESTADO ==="
+          echo "=== 4. VERIFICANDO EXISTENCIA Y ESTADO ==="
           CONTAINER_STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv 2>/dev/null || echo "NotFound")
           echo "El estado actual del contenedor es: $CONTAINER_STATE"
           
           if [ "$CONTAINER_STATE" = "NotFound" ]; then
-             echo "##[error] El contenedor no existe en Azure. Por favor, ve a la tarea anterior ('Crear o Actualizar Contenedor en ACI') y revisa las últimas 10 líneas del log para ver el mensaje de error nativo de Azure."
+             echo "##[error] El contenedor no existe en Azure. Ve a la tarea anterior ('Crear o Actualizar Contenedor') para ver el error de la región."
              exit 1
           fi
           
@@ -87,9 +82,6 @@ stages:
              exit 1
           fi
           
-          echo "=== 6. OBTENIENDO URL PÚBLICA DE VALIDACIÓN ==="
+          echo "=== 5. OBTENIENDO URL PÚBLICA DE VALIDACIÓN ==="
           ACI_URL=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "ipAddress.fqdn" -o tsv)
-          echo "La aplicación está respondiendo en de forma pública en: http://$ACI_URL"
-          
-          echo "=== 7. PROBANDO RESPUESTA HTTP (CURL) ==="
-          curl -s -I http://$ACI_URL | head -n 1
+          echo "La aplicación está respondiendo de forma pública en: http://$ACI_URL"
