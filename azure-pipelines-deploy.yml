@@ -10,10 +10,10 @@ variables:
   imageRepository: 'proyecttopico'
   
   # Variables de Destino
-  resourceGroup: 'rg-aci-demo'              # Tu grupo de recursos detectado
+  resourceGroup: 'rg-aci-demo'              
   aciContainerName: 'aci-proyecttopico'
-  dnsNameLabel: 'luis-mouse-app-topico'    # Recomiendo cambiar este DNS por si el anterior ya está tomado
-  locationRegion: 'eastus'                  # Región estable para Azure for Students
+  dnsNameLabel: 'luis-mouse-app-topico2026' # Cambiado ligeramente para evitar DNS duplicados
+  locationRegion: 'eastus'                  
 
 stages:
 - stage: DeployToACI
@@ -26,7 +26,7 @@ stages:
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-    # PASO 2 CORREGIDO: Incluye ubicación explícita (--location)
+    # PASO 2 CONFIGURADO PARA AUTO-HABILITAR ADMIN USER
     - task: AzureCLI@2
       displayName: 'Crear o Actualizar Contenedor en ACI'
       inputs:
@@ -34,12 +34,15 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "=== 1. OBTENIENDO CREDENCIALES DEL ACR ==="
-          ACR_PASSWORD=$(az acr repository registry-credentials show --name $(acrLoginServer) --query "passwords[0].value" -o tsv)
+          echo "=== 1. ASEGURANDO USUARIO ADMINISTRADOR EN EL ACR ==="
+          # Este comando fuerza a que el ACR permita el acceso por credenciales básicas
+          az acr update --name luismo123456 --admin-enabled true --resource-group $(resourceGroup)
+          
+          echo "=== 2. OBTENIENDO CREDENCIALES DEL ACR ==="
+          ACR_PASSWORD=$(az acr repository registry-credentials show --name luismo123456 --query "passwords[0].value" -o tsv)
           ACR_USERNAME="luismo123456"
           
-          echo "=== 2. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI ==="
-          # Forzamos la ubicación en una región con alta disponibilidad de cuotas
+          echo "=== 3. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI ==="
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
@@ -57,7 +60,6 @@ stages:
             
           echo "=== Intento de creación finalizado ==="
 
-    # PASO 3 CORREGIDO: Manejo de errores por si no se encuentra el recurso
     - task: AzureCLI@2
       displayName: 'Verificar Estado y Validar Aplicación'
       inputs:
@@ -65,25 +67,23 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "=== 3. VERIFICANDO QUE EL CONTENEDOR ESTÉ EN EJECUCIÓN ==="
-          
-          # Consultar el estado protegiendo el script de caídas drásticas si no se encuentra
+          echo "=== 4. VERIFICANDO QUE EL CONTENEDOR ESTÉ EN EJECUCIÓN ==="
           CONTAINER_STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv 2>/dev/null || echo "NotFound")
           echo "El estado actual del contenedor es: $CONTAINER_STATE"
           
           if [ "$CONTAINER_STATE" = "NotFound" ]; then
-             echo "##[error] El contenedor no pudo ser creado en el paso anterior. Revisa los logs del Paso 2 para ver el motivo (puede ser saturación de la región o DNS duplicado)."
+             echo "##[error] El contenedor no pudo ser creado. Revisa por favor los logs completos del paso anterior ('Crear o Actualizar Contenedor en ACI') para leer el mensaje de error de Azure."
              exit 1
           fi
           
           if [ "$CONTAINER_STATE" != "Running" ]; then
-             echo "##[error] El contenedor existe pero no está en ejecución. Estado actual: $CONTAINER_STATE"
+             echo "##[error] El contenedor existe pero no está corriendo. Estado: $CONTAINER_STATE"
              exit 1
           fi
           
-          echo "=== 4. OBTENIENDO URL PÚBLICA DE VALIDACIÓN ==="
+          echo "=== 5. OBTENIENDO URL PÚBLICA DE VALIDACIÓN ==="
           ACI_URL=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "ipAddress.fqdn" -o tsv)
           echo "La aplicación está en vivo en: http://$ACI_URL"
           
-          echo "=== 5. PROBANDO RESPUESTA HTTP ==="
+          echo "=== 6. PROBANDO RESPUESTA HTTP ==="
           curl -s -I http://$ACI_URL | head -n 1
