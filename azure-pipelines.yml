@@ -2,7 +2,7 @@ trigger:
   - main  # Se ejecuta automáticamente cuando subes cambios a la rama main
 
 pool:
-  vmImage: 'ubuntu-latest' # Agente Linux con Docker preinstalado
+  vmImage: 'ubuntu-latest' # Agente Linux ideal para compilar Docker de forma nativa
 
 variables:
   # Nombre exacto de tu Service Connection (tipo Azure Resource Manager)
@@ -21,63 +21,45 @@ stages:
   - job: CompileAndTest
     displayName: 'Compilar y Probar Aplicación'
     steps:
-    # 1. Obtener código fuente desde el repositorio
+    # 1. Obtener código fuente
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-    # 2. Construir la aplicación (Simulación de compilación)
+    # 2. Construir la aplicación
     - script: |
-        echo "Iniciando construcción y empaquetado de la aplicación..."
-        # Aquí puedes meter comandos reales si tu proyecto lo requiere (ej: npm run build)
+        echo "Iniciando construcción de la aplicación..."
       displayName: 'Construir la Aplicación'
 
-    # 3. Ejecutar las pruebas correspondientes
+    # 3. Pruebas correspondientes
     - script: |
-        echo "Ejecutando la suite de pruebas unitarias..."
-        # Aquí puedes meter comandos reales de testeo (ej: npm test)
+        echo "Ejecutando pruebas unitarias..."
       displayName: 'Ejecutar Pruebas Correspondientes'
 
 - stage: DockerLifecycle
   displayName: 'Etapa de Docker (Build & Push)'
-  dependsOn: BuildAndTest # Esta etapa solo corre si la anterior (pruebas) fue exitosa
+  dependsOn: BuildAndTest 
   condition: succeeded()
   jobs:
   - job: DockerPush
     displayName: 'Construir y Publicar en ACR'
     steps:
-    # 4. Autenticarse en el Azure Container Registry
+    # 4, 5 y 6. Proceso nativo unificado a través de Azure CLI (Evita congelamientos)
     - task: AzureCLI@2
-      displayName: 'Autenticar Docker en el ACR'
+      displayName: 'Docker Build y Push mediante Azure CLI'
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
+          # 1. Autenticar el motor de Docker del agente directamente con tu ACR
+          echo "Autenticando en el ACR..."
           az acr login --name $(acrLoginServer)
-
-    # 5. Construcción de la imagen Docker (Corregido para Azure RM)
-    - task: Docker@2
-      displayName: 'Construir Imagen Docker (Docker Build)'
-      inputs:
-        containerRegistryType: 'Azure Container Registry'
-        azureSubscriptionEndpoint: '$(azureServiceConnection)'
-        azureContainerRegistry: '$(acrLoginServer)'
-        repository: '$(imageRepository)'
-        command: 'build'
-        Dockerfile: '$(dockerfilePath)'
-        tags: |
-          latest
-          $(Build.BuildId) # Etiqueta dinámica con el ID de la ejecución
-
-    # 6. Publicación de la imagen en tu ACR (Docker Push)
-    - task: Docker@2
-      displayName: 'Publicar Imagen en ACR (Docker Push)'
-      inputs:
-        containerRegistryType: 'Azure Container Registry'
-        azureSubscriptionEndpoint: '$(azureServiceConnection)'
-        azureContainerRegistry: '$(acrLoginServer)'
-        repository: '$(imageRepository)'
-        command: 'push'
-        tags: |
-          latest
-          $(Build.BuildId)
+          
+          # 2. Construir la imagen localmente usando el Dockerfile de la raíz
+          echo "Iniciando Docker Build nativo..."
+          docker build -t $(acrLoginServer)/$(imageRepository):latest -t $(acrLoginServer)/$(imageRepository):$(Build.BuildId) -f $(dockerfilePath) $(Build.SourcesDirectory)
+          
+          # 3. Subir las imágenes al registro de Azure
+          echo "Iniciando Docker Push nativo..."
+          docker push $(acrLoginServer)/$(imageRepository):latest
+          docker push $(acrLoginServer)/$(imageRepository):$(Build.BuildId)
