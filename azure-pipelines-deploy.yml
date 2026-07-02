@@ -26,7 +26,7 @@ stages:
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-    # PASO 2: Habilitar Admin, Detectar Región e Intentar Creación Directa
+# PASO 2 CORREGIDO: Autenticación automática por Token (Evita fallos de contraseña)
     - task: AzureCLI@2
       displayName: 'Crear o Actualizar Contenedor en ACI'
       inputs:
@@ -37,17 +37,16 @@ stages:
           echo "=== 1. ASEGURANDO USUARIO ADMINISTRADOR EN EL ACR ==="
           az acr update --name luismo123456 --admin-enabled true --resource-group $(resourceGroup)
           
-          echo "=== 2. OBTENIENDO CREDENCIALES DEL ACR ==="
-          ACR_PASSWORD=$(az acr repository registry-credentials show --name luismo123456 --query "passwords[0].value" -o tsv)
-          ACR_USERNAME="luismo123456"
+          echo "=== 2. GENERANDO TOKEN DE ACCESO TEMPORAL ==="
+          # Generamos un token de acceso directo del canal de Azure sin usar comandos propensos a errores
+          ACR_TOKEN=$(az acr login --name luismo123456 --expose-token --output tsv --query accessToken)
           
           echo "=== 3. DETECTANDO UBICACIÓN DEL GRUPO DE RECURSOS ==="
-          # Extrae automáticamente la región de tu RG (ej. eastus, westus, southcentralus)
           DETECTED_LOCATION=$(az group show --name $(resourceGroup) --query location -o tsv)
           echo "La región detectada es: $DETECTED_LOCATION"
           
           echo "=== 4. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI ==="
-          # Ejecutamos el comando usando la ubicación detectada dinámicamente
+          # Usamos el Token generado como contraseña de despliegue seguro
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
@@ -56,8 +55,8 @@ stages:
             --cpu 1 \
             --memory 1.5Gi \
             --registry-login-server $(acrLoginServer) \
-            --registry-username $ACR_USERNAME \
-            --registry-password $ACR_PASSWORD \
+            --registry-username "00000000-0000-0000-0000-000000000000" \
+            --registry-password $ACR_TOKEN \
             --dns-name-label $(dnsNameLabel) \
             --ports 80 \
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)" \
