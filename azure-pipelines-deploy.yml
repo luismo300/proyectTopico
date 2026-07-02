@@ -26,7 +26,7 @@ stages:
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-    # PASO 2: Creación en la región autorizada East US 2
+ # PASO 2 CORREGIDO: Declarando explícitamente el sistema operativo (Linux)
     - task: AzureCLI@2
       displayName: 'Crear o Actualizar Contenedor en ACI'
       inputs:
@@ -47,6 +47,7 @@ stages:
             --name $(aciContainerName) \
             --image $(acrLoginServer)/$(imageRepository):latest \
             --location $(locationRegion) \
+            --os-type Linux \
             --cpu 1 \
             --memory 1.5 \
             --registry-login-server $(acrLoginServer) \
