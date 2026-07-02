@@ -12,8 +12,8 @@ variables:
   # Variables de Destino
   resourceGroup: 'rg-aci-demo'              
   aciContainerName: 'aci-proyecttopico'
-  dnsNameLabel: 'luis-mouse-app-topico-v3' # Cambiado para evitar choques de nombres
-  locationRegion: 'eastus'                 # REGION FORZADA A EASTUS
+  dnsNameLabel: 'luis-mouse-app-topico-v5' # Cambiado para evitar conflictos de DNS previos
+  locationRegion: 'eastus2'                # CONFIGURADO EN EAST US 2
 
 stages:
 - stage: DeployToACI
@@ -26,7 +26,7 @@ stages:
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-    # PASO 2 CORREGIDO: Creación forzada en East US para cuentas de estudiante
+    # PASO 2: Creación en la región autorizada East US 2
     - task: AzureCLI@2
       displayName: 'Crear o Actualizar Contenedor en ACI'
       inputs:
@@ -41,8 +41,7 @@ stages:
           ACR_PASSWORD=$(az acr credential show --name luismo123456 --query "passwords[0].value" -o tsv)
           ACR_USERNAME="luismo123456"
           
-          echo "=== 3. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI (EAST US) ==="
-          # CAMBIO CLAVE: Usamos $(locationRegion) en lugar de $DETECTED_LOCATION
+          echo "=== 3. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI (EAST US 2) ==="
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
@@ -60,7 +59,7 @@ stages:
             
           echo "=== Proceso de creación enviado ==="
 
-    # PASO 3: Validación robusta del ciclo de vida
+    # PASO 3: Validación del ciclo de vida
     - task: AzureCLI@2
       displayName: 'Verificar Estado y Validar Aplicación'
       inputs:
@@ -73,7 +72,7 @@ stages:
           echo "El estado actual del contenedor es: $CONTAINER_STATE"
           
           if [ "$CONTAINER_STATE" = "NotFound" ]; then
-             echo "##[error] El contenedor no existe en Azure. Ve a la tarea anterior ('Crear o Actualizar Contenedor') para ver el error de la región."
+             echo "##[error] El contenedor no existe en Azure. Revisa la tarea anterior para ver el error."
              exit 1
           fi
           
