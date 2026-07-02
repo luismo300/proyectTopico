@@ -1,19 +1,19 @@
 trigger:
-  none # Se deja en 'none' para que este pipeline se ejecute manualmente o sea encadenado
+  none
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # 1. Configuración de Conexión y Registro
   azureServiceConnection: 'AzureServiceConnection'
   acrLoginServer: 'luismo123456.azurecr.io'
   imageRepository: 'proyecttopico'
   
-  # 2. Configuración del Destino (ACI)
-  resourceGroup: 'rg-aci-demo'        # <- REEMPLAZA con el nombre de tu Grupo de Recursos en Azure
-  aciContainerName: 'aci-proyecttopico'     # Nombre que tendrá tu instancia de contenedor
-  dnsNameLabel: 'mouse-razer-app'          # URL pública -> http://mouse-razer-app.eastus.azurecontainer.io
+  # Variables de Destino
+  resourceGroup: 'rg-aci-demo'              # Tu grupo de recursos detectado
+  aciContainerName: 'aci-proyecttopico'
+  dnsNameLabel: 'luis-mouse-app-topico'    # Recomiendo cambiar este DNS por si el anterior ya está tomado
+  locationRegion: 'eastus'                  # Región estable para Azure for Students
 
 stages:
 - stage: DeployToACI
@@ -23,11 +23,10 @@ stages:
     displayName: 'Desplegar Imagen en Azure Container Instances'
     steps:
 
-    # Paso 1: Descargar el código fuente (opcional, pero útil para mantener el contexto)
     - checkout: self
       displayName: 'Obtener Código Fuente'
 
-    # Paso 2: Desplegar o actualizar el contenedor en ACI usando Azure CLI
+    # PASO 2 CORREGIDO: Incluye ubicación explícita (--location)
     - task: AzureCLI@2
       displayName: 'Crear o Actualizar Contenedor en ACI'
       inputs:
@@ -36,16 +35,16 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           echo "=== 1. OBTENIENDO CREDENCIALES DEL ACR ==="
-          # Obtenemos el password del ACR dinámicamente para que ACI pueda descargar la imagen privada
           ACR_PASSWORD=$(az acr repository registry-credentials show --name $(acrLoginServer) --query "passwords[0].value" -o tsv)
-          ACR_USERNAME="luismo123456" # El nombre de tu ACR sin el .azurecr.io
+          ACR_USERNAME="luismo123456"
           
           echo "=== 2. CREANDO O ACTUALIZANDO EL CONTENEDOR EN ACI ==="
-          # Comando nativo para desplegar en ACI configurando puertos, DNS público y credenciales de acceso
+          # Forzamos la ubicación en una región con alta disponibilidad de cuotas
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
             --image $(acrLoginServer)/$(imageRepository):latest \
+            --location $(locationRegion) \
             --cpu 1 \
             --memory 1.5Gi \
             --registry-login-server $(acrLoginServer) \
@@ -56,9 +55,9 @@ stages:
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)" \
             --restart-policy OnFailure
             
-          echo "=== Despliegue de infraestructura finalizado con éxito ==="
+          echo "=== Intento de creación finalizado ==="
 
-    # Paso 3: Verificar estado de ejecución y validar accesibilidad de la aplicación
+    # PASO 3 CORREGIDO: Manejo de errores por si no se encuentra el recurso
     - task: AzureCLI@2
       displayName: 'Verificar Estado y Validar Aplicación'
       inputs:
@@ -67,20 +66,24 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           echo "=== 3. VERIFICANDO QUE EL CONTENEDOR ESTÉ EN EJECUCIÓN ==="
-          # Consulta el estado actual del contenedor en Azure
-          CONTAINER_STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv)
+          
+          # Consultar el estado protegiendo el script de caídas drásticas si no se encuentra
+          CONTAINER_STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv 2>/dev/null || echo "NotFound")
           echo "El estado actual del contenedor es: $CONTAINER_STATE"
           
+          if [ "$CONTAINER_STATE" = "NotFound" ]; then
+             echo "##[error] El contenedor no pudo ser creado en el paso anterior. Revisa los logs del Paso 2 para ver el motivo (puede ser saturación de la región o DNS duplicado)."
+             exit 1
+          fi
+          
           if [ "$CONTAINER_STATE" != "Running" ]; then
-             echo "##[error] El contenedor no se encuentra en estado Running. Revisar logs en Azure."
+             echo "##[error] El contenedor existe pero no está en ejecución. Estado actual: $CONTAINER_STATE"
              exit 1
           fi
           
           echo "=== 4. OBTENIENDO URL PÚBLICA DE VALIDACIÓN ==="
-          # Extrae el FQDN (URL completa) asignado al contenedor
           ACI_URL=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "ipAddress.fqdn" -o tsv)
-          echo "La aplicación debe ser accesible en: http://$ACI_URL"
+          echo "La aplicación está en vivo en: http://$ACI_URL"
           
-          echo "=== 5. PROBANDO ACCESIBILIDAD (HTTP GET) ==="
-          # Hace una petición rápida al contenedor para validar que responda un código HTTP 200 (Éxito)
+          echo "=== 5. PROBANDO RESPUESTA HTTP ==="
           curl -s -I http://$ACI_URL | head -n 1
