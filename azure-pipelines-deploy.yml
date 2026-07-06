@@ -49,6 +49,8 @@ stages:
             --cpu 1 \
             --memory 1.5 \
             --ports 80 \
+            --ip-address public \
+            --dns-name-label acidemo-luismo \
             --restart-policy OnFailure \
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)"
             
