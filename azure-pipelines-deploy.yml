@@ -31,13 +31,12 @@ stages:
           ACR_PASSWORD=$(az acr credential show --name luismo123456 --query "passwords[0].value" -o tsv)
           
           echo "=== 2. DIAGNÓSTICO: ¿EXISTE LA IMAGEN $(Build.BuildId)? ==="
-          # Esto listará los tags reales en tu ACR para confirmar si la imagen existe
           az acr repository show-tags --name luismo123456 --repository $(imageRepository) --output table
           
           echo "=== 3. ELIMINANDO INSTANCIA ANTERIOR ==="
           az container delete --resource-group $(resourceGroup) --name $(aciContainerName) --yes || true
           
-          echo "=== 4. DESPLEGANDO VERSIÓN: $(Build.BuildId) ==="
+          echo "=== 4. DESPLEGANDO VERSIÓN: latest EN VNET ==="
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
@@ -49,8 +48,8 @@ stages:
             --cpu 1 \
             --memory 1.5 \
             --ports 80 \
-            --ip-address public \
-            --dns-name-label acidemo-luismo \
+            --vnet <NOMBRE_DE_TU_VNET> \
+            --subnet <NOMBRE_DE_TU_SUBRED> \
             --restart-policy OnFailure \
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)"
             
