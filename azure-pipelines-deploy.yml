@@ -8,22 +8,17 @@ variables:
   azureServiceConnection: 'AzureServiceConnection'
   acrLoginServer: 'luismo123456.azurecr.io'
   imageRepository: 'proyecttopico'
-  
-  # Variables de Destino
   resourceGroup: 'rg-aci-demo'              
   aciContainerName: 'aci-demo' 
-  locationRegion: 'eastus2'
   
 stages:
 - stage: DeployToACI
-  displayName: 'Etapa de Despliegue en ACI'
+  displayName: 'Despliegue en ACI'
   jobs:
-  - job: ContainerDeployment
-    displayName: 'Desplegar Imagen en Azure Container Instances'
+  - job: Deploy
     steps:
-
     - task: AzureCLI@2
-      displayName: 'Actualizar Contenedor en ACI'
+      displayName: 'Actualizar Contenedor'
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'bash'
@@ -31,17 +26,15 @@ stages:
         inlineScript: |
           set -e
           
-          echo "=== 1. ASEGURANDO CONFIGURACIÓN DE ACR ==="
+          echo "=== 1. PREPARANDO ACR ==="
           az acr update --name luismo123456 --admin-enabled true --resource-group $(resourceGroup)
-          
-          echo "=== 2. OBTENIENDO CREDENCIALES ==="
           ACR_PASSWORD=$(az acr credential show --name luismo123456 --query "passwords[0].value" -o tsv)
-          ACR_USERNAME="luismo123456"
           
-          # ELIMINAR EL CONTENEDOR SI EXISTE:
-          # Azure no permite modificar parámetros como memoria/reinicio en caliente, 
-          # por lo que borramos la instancia previa para crearla fresca.
-          echo "=== 3. ELIMINANDO INSTANCIA PREVIA (SI EXISTE) ==="
+          echo "=== 2. DIAGNÓSTICO: ¿EXISTE LA IMAGEN $(Build.BuildId)? ==="
+          # Esto listará los tags reales en tu ACR para confirmar si la imagen existe
+          az acr repository show-tags --name luismo123456 --repository $(imageRepository) --output table
+          
+          echo "=== 3. ELIMINANDO INSTANCIA ANTERIOR ==="
           az container delete --resource-group $(resourceGroup) --name $(aciContainerName) --yes || true
           
           echo "=== 4. DESPLEGANDO VERSIÓN: $(Build.BuildId) ==="
@@ -50,7 +43,7 @@ stages:
             --name $(aciContainerName) \
             --image $(acrLoginServer)/$(imageRepository):$(Build.BuildId) \
             --registry-login-server $(acrLoginServer) \
-            --registry-username $ACR_USERNAME \
+            --registry-username "luismo123456" \
             --registry-password $ACR_PASSWORD \
             --os-type Linux \
             --cpu 1 \
@@ -59,18 +52,4 @@ stages:
             --restart-policy OnFailure \
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)"
             
-          echo "=== Despliegue de versión $(Build.BuildId) finalizado ==="
-
-    - task: AzureCLI@2
-      displayName: 'Validar Estado del Contenedor'
-      inputs:
-        azureSubscription: '$(azureServiceConnection)'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          echo "=== 5. VERIFICANDO ESTADO ==="
-          STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv)
-          echo "El estado actual del contenedor es: $STATE"
-          
-          FQDN=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "ipAddress.fqdn" -o tsv)
-          echo "Tu aplicación está disponible en: http://$FQDN"
+          echo "=== Despliegue finalizado exitosamente ==="
