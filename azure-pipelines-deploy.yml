@@ -41,7 +41,7 @@ stages:
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
-            --image $(acrLoginServer)/$(imageRepository):$(Build.BuildId) \
+            --image $(acrLoginServer)/$(imageRepository):latest \
             --registry-login-server $(acrLoginServer) \
             --registry-username "luismo123456" \
             --registry-password $ACR_PASSWORD \
