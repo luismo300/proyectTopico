@@ -1,5 +1,5 @@
 trigger:
-  none # Cambia a 'main' si quieres que se dispare automáticamente con cada push
+  none 
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -9,12 +9,10 @@ variables:
   acrLoginServer: 'luismo123456.azurecr.io'
   imageRepository: 'proyecttopico'
   
-  # Variables de Destino (Configuradas para tu recurso existente)
+  # Variables de Destino
   resourceGroup: 'rg-aci-demo'              
-  aciContainerName: 'aci-demo' # Nombre del ACI que ya tienes
+  aciContainerName: 'aci-demo' 
   locationRegion: 'eastus2'
-  # Nota: El DNS label usualmente no se puede cambiar una vez creado el ACI, 
-  # por lo que el parámetro --dns-name-label es opcional si ya existe.
   
 stages:
 - stage: DeployToACI
@@ -31,17 +29,21 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "=== 1. OBTENIENDO CREDENCIALES DEL ACR ==="
-          # Obtenemos las credenciales para asegurar que ACI pueda descargar la imagen
+          set -e  # Detiene el script si hay errores
+          
+          echo "=== 1. ASEGURANDO CONFIGURACIÓN DE ACR ==="
+          az acr update --name luismo123456 --admin-enabled true --resource-group $(resourceGroup)
+          
+          echo "=== 2. OBTENIENDO CREDENCIALES ==="
           ACR_PASSWORD=$(az acr credential show --name luismo123456 --query "passwords[0].value" -o tsv)
           ACR_USERNAME="luismo123456"
           
-          echo "=== 2. DESPLEGANDO/ACTUALIZANDO EL CONTENEDOR $(aciContainerName) ==="
-          # El comando 'create' de Azure CLI actúa como 'upsert' (crea si no existe, actualiza si existe)
+          echo "=== 3. DESPLEGANDO VERSIÓN: $(Build.BuildId) ==="
+          # Se cambió :latest por :$(Build.BuildId)
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
-            --image $(acrLoginServer)/$(imageRepository):latest \
+            --image $(acrLoginServer)/$(imageRepository):$(Build.BuildId) \
             --registry-login-server $(acrLoginServer) \
             --registry-username $ACR_USERNAME \
             --registry-password $ACR_PASSWORD \
@@ -51,7 +53,7 @@ stages:
             --restart-policy OnFailure \
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)"
             
-          echo "=== Despliegue finalizado exitosamente ==="
+          echo "=== Despliegue de versión $(Build.BuildId) finalizado ==="
 
     - task: AzureCLI@2
       displayName: 'Validar Estado del Contenedor'
@@ -60,9 +62,9 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "=== 3. VERIFICANDO ESTADO ==="
+          echo "=== 4. VERIFICANDO ESTADO ==="
           STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv)
           echo "El estado actual es: $STATE"
           
           FQDN=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "ipAddress.fqdn" -o tsv)
-          echo "Tu aplicación está disponible en: http://$FQDN"
+          echo "Tu aplicación versión $(Build.BuildId) está disponible en: http://$FQDN"
