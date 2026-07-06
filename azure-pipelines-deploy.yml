@@ -48,8 +48,8 @@ stages:
             --cpu 1 \
             --memory 1.5 \
             --ports 80 \
-            --vnet <NOMBRE_DE_TU_VNET> \
-            --subnet <NOMBRE_DE_TU_SUBRED> \
+            --vnet vnet-aci \
+            --subnet subnet-aci \
             --restart-policy OnFailure \
             --environment-variables ENTORNOMODE="Produccion" VERSION="$(Build.BuildId)"
             
