@@ -21,7 +21,6 @@ stages:
   - job: ContainerDeployment
     displayName: 'Desplegar Imagen en Azure Container Instances'
     steps:
-
     - task: AzureCLI@2
       displayName: 'Actualizar Contenedor en ACI'
       inputs:
@@ -29,7 +28,7 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          set -e  # Detiene el script si hay errores
+          set -e
           
           echo "=== 1. ASEGURANDO CONFIGURACIÓN DE ACR ==="
           az acr update --name luismo123456 --admin-enabled true --resource-group $(resourceGroup)
@@ -39,7 +38,6 @@ stages:
           ACR_USERNAME="luismo123456"
           
           echo "=== 3. DESPLEGANDO VERSIÓN: $(Build.BuildId) ==="
-          # Se cambió :latest por :$(Build.BuildId)
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
@@ -47,6 +45,7 @@ stages:
             --registry-login-server $(acrLoginServer) \
             --registry-username $ACR_USERNAME \
             --registry-password $ACR_PASSWORD \
+            --os-type Linux \
             --cpu 1 \
             --memory 1.5 \
             --ports 80 \
