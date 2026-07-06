@@ -21,6 +21,7 @@ stages:
   - job: ContainerDeployment
     displayName: 'Desplegar Imagen en Azure Container Instances'
     steps:
+
     - task: AzureCLI@2
       displayName: 'Actualizar Contenedor en ACI'
       inputs:
@@ -37,7 +38,13 @@ stages:
           ACR_PASSWORD=$(az acr credential show --name luismo123456 --query "passwords[0].value" -o tsv)
           ACR_USERNAME="luismo123456"
           
-          echo "=== 3. DESPLEGANDO VERSIÓN: $(Build.BuildId) ==="
+          # ELIMINAR EL CONTENEDOR SI EXISTE:
+          # Azure no permite modificar parámetros como memoria/reinicio en caliente, 
+          # por lo que borramos la instancia previa para crearla fresca.
+          echo "=== 3. ELIMINANDO INSTANCIA PREVIA (SI EXISTE) ==="
+          az container delete --resource-group $(resourceGroup) --name $(aciContainerName) --yes || true
+          
+          echo "=== 4. DESPLEGANDO VERSIÓN: $(Build.BuildId) ==="
           az container create \
             --resource-group $(resourceGroup) \
             --name $(aciContainerName) \
@@ -61,9 +68,9 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "=== 4. VERIFICANDO ESTADO ==="
+          echo "=== 5. VERIFICANDO ESTADO ==="
           STATE=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "instanceView.state" -o tsv)
-          echo "El estado actual es: $STATE"
+          echo "El estado actual del contenedor es: $STATE"
           
           FQDN=$(az container show --resource-group $(resourceGroup) --name $(aciContainerName) --query "ipAddress.fqdn" -o tsv)
-          echo "Tu aplicación versión $(Build.BuildId) está disponible en: http://$FQDN"
+          echo "Tu aplicación está disponible en: http://$FQDN"
